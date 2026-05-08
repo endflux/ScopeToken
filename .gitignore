@@ -1,0 +1,15 @@
+node_modules/
+*.log
+.DS_Store
+coverage/
+
+# Local env (committed template is .env.example)
+.env
+
+# Vercel
+.vercel/
+.vercel
+
+PROJECT.md 
+STACK.md 
+CLAUDE.md
