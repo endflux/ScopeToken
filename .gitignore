@@ -2,6 +2,7 @@ node_modules/
 *.log
 .DS_Store
 coverage/
+.claude
 
 # Local env (committed template is .env.example)
 .env
