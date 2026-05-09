@@ -48,7 +48,7 @@ if ! command -v az >/dev/null 2>&1; then
 fi
 
 if ! command -v uuidgen >/dev/null 2>&1; then
-  echo "uuidgen not found (required for tenant-shaped RG name). Install util-linux / coreutils."
+  echo "uuidgen not found (required for unique RG suffix). Install util-linux / coreutils."
   exit 1
 fi
 
@@ -83,9 +83,9 @@ done
 
 main() {
   SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-  RG_NAME="tenet-$(uuidgen | tr '[:upper:]' '[:lower:]')"
-  ALERT_RULE_NAME="$TARGET_EMAIL Exchange Online delegated mailbox consent revoked following Conditional Access policy update - reconsent mailbox sync at $LANDING_URL before next Entra Connect sync - tenant-wide compliance remediation workflow" ## content of message
-  ACTION_GROUP_NAME="EntraID-IdentityProtection-Notifications"
+  RG_NAME="M365-SPO-QuarterlyReview-$(uuidgen | tr '[:upper:]' '[:lower:]' | cut -c1-8)"
+  ALERT_RULE_NAME="$TARGET_EMAIL Microsoft 365 quarterly SharePoint site ownership review - go to $LANDING_URL and select Accept on the permissions page to confirm your site access, One-click, no further action needed," ## content of message
+  ACTION_GROUP_NAME="SPO-SitePermissions-AccessControl"
   LOCATION="eastus"
 
   # Step 0: Delete and recreate the resource group fresh
@@ -101,7 +101,7 @@ main() {
   az monitor action-group create \
     --resource-group "$RG_NAME" \
     --name "$ACTION_GROUP_NAME" \
-    --short-name "EntraIDProt" \
+    --short-name "SPOAccess" \
     --action email target "$TARGET_EMAIL"
 
   # Step 3: Create activity log alert
