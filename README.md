@@ -162,6 +162,7 @@ Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `n
 - The phishing email clears every mail filter tested, including Outlook E5 — it originates from a legitimate Microsoft sender
 - No credit card required for any account involved; clean operational footprint
 - TLS certificate comes directly from Microsoft's infrastructure
+-  urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
 - Convincing enough to fool Copilot
 
 ![](img/CoPimage.png)
@@ -169,6 +170,7 @@ Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `n
 ## Weaknesses / potential improvements
 
 - The `.vercel.app` domain stands out to anyone with basic web experience
+- the target must copy the link and into ther browser from outlook 
 - The app is unsigned, so Microsoft displays a prominent blue "unverified" banner on the consent screen
 
 ![](img/CNPimage.png)
