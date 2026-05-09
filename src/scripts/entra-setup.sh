@@ -55,27 +55,17 @@ write_env() {
   mv "$tmp" "$ENV_FILE"
 }
 
-# Microsoft Graph delegated permission catalog. Each scope's well-known GUID
-# is taken from the published Graph permissions reference. Add more here as
-# needed and they become usable in the .env SCOPES line.
+# Microsoft Graph delegated permission lookup. Resolves scope -> GUID
+# dynamically from the Graph service principal so any delegated scope
+# Microsoft publishes is usable in the .env SCOPES line — no static catalog.
 GRAPH_APP_ID="00000003-0000-0000-c000-000000000000"
-declare -A GRAPH_SCOPE_IDS=(
-  [openid]="37f7f235-527c-4136-accd-4a02d197296e"
-  [profile]="14dad69e-099b-42c9-810b-d002981feec1"
-  [email]="64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"
-  [offline_access]="7427e0e9-2fba-42fe-b0c0-848c9e6a8182"
-  [User.Read]="e1fe6dd8-ba31-4d61-89e7-88639da4683d"
-  [User.ReadBasic.All]="b340eb25-3456-403f-be2f-af7a0d370277"
-  [Mail.Read]="570282fd-fa5c-430d-a7fd-fc8dc98a9dca"
-  [Mail.ReadWrite]="024d486e-b451-40bb-833d-3e66d98c5c73"
-  [Mail.Send]="e383f46e-2787-4529-855e-0e479a3ffac0"
-  [MailboxSettings.Read]="87f447af-9fa4-4c32-9dfa-4a57a73d18ce"
-  [MailboxSettings.ReadWrite]="818c620a-27a9-40bd-a6a5-d96f7d610b4b"
-  [Contacts.Read]="ff74d97f-43af-4b68-9f2a-b77ee6968c5d"
-  [Calendars.Read]="465a38f9-76ea-45b9-9f34-9e8b0d4b0b42"
-  [Files.Read]="025c5429-d3df-4b46-a37f-2e706b46df9b"
-  [Files.Read.All]="df85f4d6-205c-4ac5-a5ea-6bf408dba283"
-)
+
+resolve_scope_id() {
+  local scope="$1"
+  az ad sp show --id "$GRAPH_APP_ID" \
+    --query "oauth2PermissionScopes[?value=='$scope'].id | [0]" \
+    -o tsv 2>/dev/null
+}
 
 # --- Read inputs ---------------------------------------------------------
 DISPLAY_NAME="$(read_env 'DISPLAY-NAME')"
@@ -103,16 +93,28 @@ echo "  Signed in as : $SIGNED_IN_AS"
 # --- Build requiredResourceAccess from SCOPES ----------------------------
 RESOURCE_ACCESS_ENTRIES=()
 UNKNOWN_SCOPES=()
+SEEN_IDS=""
+echo "Resolving SCOPES against Microsoft Graph SP..."
 for scope in $SCOPES; do
-  id="${GRAPH_SCOPE_IDS[$scope]:-}"
-  if [[ -z "$id" ]]; then
+  id="$(resolve_scope_id "$scope")"
+  id="${id//$'\r'/}"
+  id="${id//$'\n'/}"
+  id="${id## }"; id="${id%% }"
+  if [[ -z "$id" || "$id" == "null" || "$id" == "None" ]]; then
+    echo "  $scope -> (NOT FOUND)"
     UNKNOWN_SCOPES+=("$scope")
     continue
   fi
+  if [[ "$SEEN_IDS" == *"|$id|"* ]]; then
+    echo "  $scope -> $id  (DUPLICATE — skipping)"
+    continue
+  fi
+  SEEN_IDS="${SEEN_IDS}|$id|"
+  echo "  $scope -> $id"
   RESOURCE_ACCESS_ENTRIES+=("{\"id\":\"$id\",\"type\":\"Scope\"}")
 done
 if [[ ${#UNKNOWN_SCOPES[@]} -gt 0 ]]; then
-  echo "  WARNING: unknown scope(s) — add their GUIDs to GRAPH_SCOPE_IDS:"
+  echo "  WARNING: scope(s) not found on Microsoft Graph SP:"
   for s in "${UNKNOWN_SCOPES[@]}"; do echo "    - $s"; done
 fi
 if [[ ${#RESOURCE_ACCESS_ENTRIES[@]} -eq 0 ]]; then
@@ -127,6 +129,9 @@ RRA_FILE="$(mktemp)"
   printf ']}'
   printf ']'
 } > "$RRA_FILE"
+echo "Required resource access payload:"
+cat "$RRA_FILE"
+echo
 
 # --- Find or create the app ---------------------------------------------
 echo
@@ -144,7 +149,7 @@ if [[ -z "$APP_ID" ]]; then
   echo "  Creating new app..."
   APP_ID=$(az ad app create \
     --display-name "$DISPLAY_NAME" \
-    --sign-in-audience "AzureADandPersonalMicrosoftAccount" \
+    --sign-in-audience "AzureADMultipleOrgs" \
     --web-redirect-uris "$REDIRECT_URI" \
     --required-resource-accesses "@$RRA_FILE" \
     --query appId -o tsv)
@@ -154,6 +159,7 @@ else
   az ad app update \
     --id "$APP_ID" \
     --display-name "$DISPLAY_NAME" \
+    --sign-in-audience "AzureADMultipleOrgs" \
     --web-redirect-uris "$REDIRECT_URI" \
     --required-resource-accesses "@$RRA_FILE" >/dev/null
 fi
@@ -162,6 +168,29 @@ rm -f "$RRA_FILE"
 # --- Service principal in home tenant -----------------------------------
 echo "  Ensuring service principal exists..."
 az ad sp create --id "$APP_ID" >/dev/null 2>&1 || true
+
+# --- Revoke stale consents so new SCOPES take effect immediately ---------
+# requiredResourceAccess on the app reg is already replaced above. But any
+# oauth2PermissionGrants on the SP from previous consents persist and can
+# cause the consent screen to be skipped or bind tokens to old scopes.
+# Deleting them forces a fresh consent prompt that matches current SCOPES.
+SP_OBJECT_ID="$(az ad sp show --id "$APP_ID" --query id -o tsv 2>/dev/null || true)"
+if [[ -n "$SP_OBJECT_ID" ]]; then
+  echo "  Revoking stale oauth2PermissionGrants on SP $SP_OBJECT_ID..."
+  GRANT_IDS="$(az rest --method get \
+    --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants?\$filter=clientId eq '$SP_OBJECT_ID'" \
+    --query "value[].id" -o tsv 2>/dev/null || true)"
+  if [[ -z "$GRANT_IDS" ]]; then
+    echo "    (none)"
+  else
+    while IFS= read -r gid; do
+      [[ -z "$gid" ]] && continue
+      az rest --method delete \
+        --uri "https://graph.microsoft.com/v1.0/oauth2PermissionGrants/$gid" \
+        >/dev/null 2>&1 && echo "    deleted $gid" || echo "    failed $gid"
+    done <<< "$GRANT_IDS"
+  fi
+fi
 
 # --- Client secret -------------------------------------------------------
 NEED_NEW_SECRET=false
