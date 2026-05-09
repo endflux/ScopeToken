@@ -2,47 +2,26 @@
 
 An illicit consent-grant framework built on Node.js, inspired by 365-stealer. Leverages Azure Monitor alerts to deliver phishing emails from `azure-noreply@microsoft.com` — note that Azure Monitor strips `.com`, `.net`, and any `/` from alert message bodies. Once a target consents, the app captures their `access_token` and `refresh_token` and persists them to Upstash Redis.
 
-## File structure
+## Strengths
 
-```
-0auth365/
-├── vercel.json                    # Rewrites every path to api/index
-├── package.json                   # npm scripts + deps
-├── .env                           # env file
-├── PROJECT.md                     # Scope, workflow, module responsibilities
-├── STACK.md                       # Tech choices
-├── README.md                      # This file
-│
-├── public/
-│   └── robots.txt                 # Disallow: /
-│
-├── api/
-│   └── index.js                   # Vercel serverless entry — delegates to Express
-│
-└── src/
-    ├── app.js                     # Express factory: middleware order, route mounting
-    ├── config.js                  # process.env → zod-validated config
-    ├── logger.js                  # pino + redact paths for tokens
-    ├── store.js                   # Upstash Redis client + token helpers
-    ├── oauth.js                   # buildConsentUrl, exchangeCode, refreshToken
-    ├── claims.js                  # decodeIdToken: pull upn/oid/tid/name
-    ├── routes/
-    │   ├── consent.js             # GET /, GET /login/authorized
-    │   └── admin.js               # GET/POST /admin/* — JSON only, bearer-gated
-    ├── middleware/
-    │   ├── bearerAuth.js          # Authorization: Bearer ADMIN_TOKEN; 404 on miss
-    │   └── errorHandler.js        # Silent-fail redirect on consent path, JSON 500 on admin
-    ├── scripts/
-    │   ├── az-setup.sh            # One-time Azure resource provider registration (runs as part of deploy)
-    │   ├── entra-setup.sh         # One-time Entra ID app registration / reconcile from .env
-    │   ├── phish.sh               # Azure Monitor alert delivery — sends phish email to target
-    │   ├── sync-env.js            # Push .env → Vercel project env (production)
-    │   ├── dump-tokens.js         # curl /admin/export with the bearer from .env
-    │   ├── clear-tokens.js        # Wipe all token records from Redis
-    │   └── revoke-consent.js      # Delete the Entra oauth2PermissionGrant via az cli
-    └── test/                      # node --test, in-memory store + undici MockAgent
-        └── _helpers.js            # Shared test fixtures (in-memory store, mock config)
-```
+- The phishing email clears every mail filter tested, including Outlook E5 — it originates from a legitimate Microsoft sender
+- No credit card required for any account involved; clean operational footprint
+- TLS certificate comes directly from Microsoft's infrastructure
+-  urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
+
+![](img/gmailimage.png)
+
+- Convincing enough to fool Copilot
+
+![](img/CoPimage.png)
+
+## Weaknesses / potential improvements
+
+- The `.vercel.app` domain stands out to anyone with basic web experience as very unusual for windows  
+- the target must copy the link and into ther browser if useing outlook 
+- The app is unsigned, so Microsoft displays a prominent blue "unverified" banner on the consent screen
+
+![](img/permsimage.png)
 
 ## First-time deploy
 
@@ -157,25 +136,3 @@ npm run deploy
 
 Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `npm run deploy`.
 
-## Strengths
-
-- The phishing email clears every mail filter tested, including Outlook E5 — it originates from a legitimate Microsoft sender
-- No credit card required for any account involved; clean operational footprint
-- TLS certificate comes directly from Microsoft's infrastructure
--  urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
-
-![](img/gmailimage.png)
-
-- Convincing enough to fool Copilot
-
-![](img/CoPimage.png)
-
-## Weaknesses / potential improvements
-
-- The `.vercel.app` domain stands out to anyone with basic web experience as very unusual for windows  
-- the target must copy the link and into ther browser if useing outlook 
-- The app is unsigned, so Microsoft displays a prominent blue "unverified" banner on the consent screen
-
-![](img/permsimage.png)
-
-4
