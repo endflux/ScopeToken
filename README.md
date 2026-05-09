@@ -163,15 +163,19 @@ Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `n
 - No credit card required for any account involved; clean operational footprint
 - TLS certificate comes directly from Microsoft's infrastructure
 -  urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
+
+![](img/gmailimage.png)
+
+
 - Convincing enough to fool Copilot
 
 ![](img/CoPimage.png)
 
 ## Weaknesses / potential improvements
 
-- The `.vercel.app` domain stands out to anyone with basic web experience
+- The `.vercel.app` domain stands out to anyone with basic web experience as very unusual for windows  
 - the target must copy the link and into ther browser from outlook 
 - The app is unsigned, so Microsoft displays a prominent blue "unverified" banner on the consent screen
 
-![](img/CNPimage.png)
+![](img/permsimage.png)
 
