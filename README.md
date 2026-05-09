@@ -115,10 +115,8 @@ Creates a disposable Azure resource group, action group, and activity-log alert 
 
 | Script | What it does |
 |---|---|
-| `npm run dev` | Local dev via `vercel dev` (port 3000). |
 | `npm run deploy` | Register Azure resource providers (`az-setup.sh`), sync env, then `vercel deploy --prod`. |
 | `npm run logs` | Tail runtime logs from the latest production deployment. |
-| `npm test` | Run the test suite (in-memory store, mocked token endpoint). |
 | `npm run db:dump` | curl `/admin/export` with the bearer from `.env`; prints all captured token blobs as JSON. |
 | `npm run db:clear` | Wipe every record from Redis. |
 | `npm run kill:Users [user@domain]` | Delete the Entra `oauth2PermissionGrant` via `az` so the next visit shows the consent screen fresh. Defaults to the currently `az`-logged-in user. |
