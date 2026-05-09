@@ -2,6 +2,8 @@
 
 An illicit consent-grant framework built on Node.js, inspired by 365-stealer. Leverages Azure Monitor alerts to deliver phishing emails from `azure-noreply@microsoft.com` — note that Azure Monitor strips `.com`, `.net`, and any `/` from alert message bodies. Once a target consents, the app captures their `access_token` and `refresh_token` and persists them to Upstash Redis.
 
+based on altered securities 365-stealer - https://github.com/AlteredSecurity/365-Stealer -
+
 ## Strengths
 
 - The phishing email clears every mail filter tested, including Outlook E5 — it originates from a legitimate Microsoft sender
