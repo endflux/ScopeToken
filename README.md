@@ -1,4 +1,4 @@
-# Awful-0Auth
+# ScopToken
 
 An illicit consent-grant framework built on Node.js, inspired by 365-stealer. Leverages Azure Monitor alerts to deliver phishing emails from `azure-noreply@microsoft.com` — note that Azure Monitor strips `.com`, `.net`, and any `/` from alert message bodies. Once a target consents, the app captures their `access_token` and `refresh_token` and persists them to Upstash Redis.
 
@@ -166,7 +166,6 @@ Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `n
 
 ![](img/gmailimage.png)
 
-
 - Convincing enough to fool Copilot
 
 ![](img/CoPimage.png)
@@ -174,8 +173,9 @@ Same flow for `CLIENT_SECRET` (after rotating in Azure) — edit `.env`, then `n
 ## Weaknesses / potential improvements
 
 - The `.vercel.app` domain stands out to anyone with basic web experience as very unusual for windows  
-- the target must copy the link and into ther browser from outlook 
+- the target must copy the link and into ther browser if useing outlook 
 - The app is unsigned, so Microsoft displays a prominent blue "unverified" banner on the consent screen
 
 ![](img/permsimage.png)
 
+4
