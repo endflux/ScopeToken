@@ -7,7 +7,7 @@ An illicit consent-grant framework built on Node.js, inspired by 365-stealer. Le
 - The phishing email clears every mail filter tested, including Outlook E5 — it originates from a legitimate Microsoft sender
 - No credit card required for any account involved; clean operational footprint
 - TLS certificate comes directly from Microsoft's infrastructure
--  urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
+- urls that end with `.vercel.web` or `.web.app` are clickable in gmail 
 
 ![](img/gmailimage.png)
 
